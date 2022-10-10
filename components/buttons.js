@@ -83,6 +83,7 @@ async function sendQuestion(ctx) {
                 }
             }
         }
+        await ctx.editMessageText('Ваш вопрос был передан в службу поддержки' + constvalue.worktimetext)
     }
 }
 
