@@ -62,6 +62,7 @@ async function sendQuestion(ctx) {
                         }
                     }
                 }
+                await ctx.editMessageText('Ваш вопрос был передан в службу поддержки' + constvalue.worktimetext)
             }
         }
     } else {
@@ -83,7 +84,6 @@ async function sendQuestion(ctx) {
             }
         }
     }
-    await ctx.editMessageText('Ваш вопрос был передан в службу поддержки' + constvalue.worktimetext)
 }
 
 async function adminListFunc(ctx) {
@@ -182,7 +182,7 @@ async function mailingList(ctx) {
                 caption: 'cute kitty'
             })
         }
-    } catch(e) {
+    } catch (e) {
         console.log(e)
         ctx.editMessageText('Здесь будут показаны рассылки', {
             "reply_markup": {

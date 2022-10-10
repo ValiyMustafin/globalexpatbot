@@ -4,6 +4,7 @@ const constvalue = require('./const')
 require('dotenv').config()
 const keywords = require('../keywords/keywords')
 const { findKeyword, readymadeAnswers } = require('../keywords/keywords')
+const { click_version } = require('../keywords/keywords')
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.use(session())
