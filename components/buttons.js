@@ -66,6 +66,7 @@ async function sendQuestion(ctx) {
             }
         }
     } else {
+        await ctx.editMessageText('Ваш вопрос был передан в службу поддержки' + constvalue.worktimetext)
         //Повторное сообщение в диалоге
         if (ctx.session.question_photo) {
             repeatedMsg(ctx, 'photo', user, ctx.session.question, ctx.session.question_photo)
@@ -83,7 +84,6 @@ async function sendQuestion(ctx) {
                 }
             }
         }
-        await ctx.editMessageText('Ваш вопрос был передан в службу поддержки' + constvalue.worktimetext)
     }
 }
 
