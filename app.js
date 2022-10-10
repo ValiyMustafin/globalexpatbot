@@ -64,17 +64,6 @@ bot.command('test', async (ctx) => {
   }
 })
 
-bot.hears('🎓 Академия', async (ctx) => {
-  const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
-  if (user.role == 'admin') {
-    await ctx.reply('Настройка академии (в разработке)', Markup.inlineKeyboard(
-      [
-        [Markup.button.callback('Список академиков', 'academList')],
-        [Markup.button.callback('Настройка академии', 'academSetting')]
-      ]))
-  }
-})
-
 bot.hears('👥 Служба поддержки', async (ctx) => {
   const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
   if (user.role == 'admin') {
