@@ -11,7 +11,7 @@ function setQuestion(search_string) {
         const { keyword, question, btn_id } = keywordObj[id];
         if (keyword != undefined) {
             for (var j = 0; j < keyword.length; j++) {
-                if (search_string.includes(keyword[j])) {
+                if (search_string.includes(keyword[j].toLowerCase())) {
                     themelist.unshift([Markup.button.callback(question, btn_id)])
                     break
                 }
@@ -27,7 +27,7 @@ function readymadeAnswers(search_string) {
         const { keyword, answer, btn_id } = keywordObj[id];
         if (keyword != undefined) {
             for (var j = 0; j < keyword.length; j++) {
-                if (search_string.includes(keyword[j])) {
+                if (search_string.includes(keyword[j].toLowerCase())) {
                     answerlist = answerlist.concat('📌 /' + btn_id + ' - ' + answer + '\n------------------------------------------------------------\n')
                     break
                 }
@@ -43,7 +43,7 @@ function findKeyword(search_string) {
         const { keyword } = keywordObj[id];
         if (keyword != undefined) {
             for (var j = 0; j < keyword.length; j++) {
-                if (search_string.includes(keyword[j])) {
+                if (search_string.includes(keyword[j].toLowerCase())) {
                     isKeyword = true
 
                 }
