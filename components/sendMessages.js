@@ -349,6 +349,7 @@ async function sendToSupportChat(ctx, type) {
     const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
     if (type === 'text') {
         await ctx.telegram.sendMessage(process.env.CHANNEL_ID, '🔷Диалог с ' + user.name + ' | @' + ctx.message.from.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.message.from.id + '\n\n💬' + ctx.message.text + constvalue.finishtext)
+        
     } else {
         if (ctx.message.caption) {
             msg_caption = ctx.message.caption
