@@ -3,24 +3,15 @@ require('dotenv').config()
 const constvalue = require('./components/const')
 const keywords = require('./keywords/keywords')
 const buttons = require('./components/buttons')
-const dates = require('./components/mailing')
-const {restartMailing} = require('./components/mailing')
+const { restartMailing } = require('./components/mailing/functions')
 const { countVersion, click_version } = require('./keywords/keywords')
 const { Messages } = require('./components/sendMessages')
+const { StartMiling } = require('./components/mailing/buttons/general')
 const { Start } = require('./components/start')
 const { Finish, Answers, sendAnswers } = require('./components/commands')
-const { sendQuestion, adminListFunc, mailingTime, mailingCancel, mailingCreate, mailingList, Actions } = require('./components/buttons')
-const sequelize = require('./db/db')
-const { User, Mailing } = require('./db/models')
-
-const start_db = async () => {
-  try {
-    await sequelize.authenticate()
-    await sequelize.sync()
-  } catch (e) {
-    console.log(e)
-  }
-}
+const { sendQuestion, Actions } = require('./components/buttons')
+const { User } = require('./db/models')
+const {start_db} = require('./db/connection')
 
 start_db()
 
@@ -30,7 +21,6 @@ if (process.env.BOT_TOKEN === undefined) {
 }
 
 bot.use(session())
-
 
 bot.command('restart', ctx => {
   if (ctx.chat.id == 408178231) {
@@ -46,28 +36,21 @@ bot.command('start', async (ctx) => {
   }
 })
 
-bot.catch((err) => {
-  console.log('Ooops', err)
-})
-
-bot.command('test', async (ctx) => {
-  bot.catch((err) => {
-    console.log('Ooops', err)
-  })
-  try {
-    bot.catch((err) => {
-      console.log('Ooops', err)
-    })
-    await ctx.telegram.sendMessage('408178231', 'тест', { parse_mode: "HTML" })
-  } catch (e) {
-    console.log(e)
+bot.hears('🎓 Академия', async (ctx) => {
+  const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
+  if (user.role == 'admin') {
+    await ctx.reply('Настройка академии (в разработке)', Markup.inlineKeyboard(
+      [
+        [Markup.button.callback('Список академиков', 'academList')],
+        [Markup.button.callback('Настройка академии', 'academSetting')]
+      ]))
   }
 })
 
 bot.hears('👥 Служба поддержки', async (ctx) => {
   const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
   if (user.role == 'admin') {
-    await ctx.reply('Чтобы получить доступ к ссылкам на сообщения, необходимо присоединиться к группе: https://t.me/+QHfYDVPWSgY1Yjli', Markup.inlineKeyboard(
+    await ctx.reply('Чтобы получить доступ к ссылкам на сообщения, необходимо присоединиться к группе: https://t.me/+KjSUdVH5QPYyMGEy', Markup.inlineKeyboard(
       [
         [Markup.button.callback('Найти диалог', 'findDialog')]
       ]))
@@ -75,13 +58,7 @@ bot.hears('👥 Служба поддержки', async (ctx) => {
 })
 
 bot.hears('✉️ Рассылка', async (ctx) => {
-  const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
-  if (user.role == 'admin') {
-    await ctx.reply('Управление рассылками', Markup.inlineKeyboard(
-      [
-        [Markup.button.callback('Создать рассылку', 'mailing_create')]
-      ]))
-  }
+  StartMiling(ctx)
 })
 
 bot.hears('⚙️ Настройки', async (ctx) => {
@@ -94,33 +71,11 @@ bot.hears('⚙️ Настройки', async (ctx) => {
   }
 })
 
-bot.action('adminList', async (ctx) => {
-  try {
-    adminListFunc(ctx)
-  } catch (e) {
-    console.log(e)
-  }
-})
-
-bot.action('adminAdd', async (ctx) => {
-  try {
-    ctx.session ??= { addadmin: 0 }
-    await ctx.answerCbQuery()
-    ctx.editMessageText('Отправьте, пожалуйста, логин (например, @login) пользователя, которого вы планируете сделать администратором', Markup.inlineKeyboard(
-      [
-        [Markup.button.callback('⬅️Отменить добавление администратора', 'adminList')]
-      ]))
-    ctx.session.addadmin = 1
-  } catch (e) {
-    console.log(e)
-  }
-})
-
 bot.action('adminSource', async (ctx) => {
   try {
     ctx.session ??= { addadmin: 0 }
     await ctx.answerCbQuery()
-    ctx.replyWithHTML('Ссылка для приглашения администаторов\n\n<code>https://t.me/globalexpat_bot?start=LnLH7DmMtH57uS4W</code>')
+    ctx.replyWithHTML('Ссылка для приглашения администаторов\n\n<code>https://t.me/SoykaSoft_Bot?start=LnLH7DmMtH57uS4W</code>')
     ctx.session.addadmin = 1
   } catch (e) {
     console.log(e)
@@ -154,7 +109,7 @@ bot.action('adminDelete', async (ctx) => {
     }
     ctx.editMessageText(adminList, Markup.inlineKeyboard(
       [
-        [Markup.button.callback('⬅️Отменить удаление администратора', 'adminList')]
+        [Markup.button.callback('↩️Отменить удаление администратора', 'adminList')]
       ]))
   } catch (e) {
     console.log(e)
@@ -285,39 +240,6 @@ bot.on('voice', async (ctx) => {
 bot.action('btn_n', async (ctx) => {
   try {
     sendQuestion(ctx)
-  } catch (e) {
-    console.log(e)
-  }
-})
-
-bot.action('mailing_t', async (ctx) => {
-  try {
-    mailingTime(ctx)
-  } catch (e) {
-    console.log(e)
-  }
-})
-
-bot.action('mailing_n', async (ctx) => {
-  try {
-    mailingCancel(ctx)
-  } catch (e) {
-    console.log(e)
-  }
-})
-
-bot.action('mailing_create', async (ctx) => {
-  try {
-    mailingCreate(ctx)
-  } catch (e) {
-    console.log(e)
-  }
-})
-
-
-bot.action('mailing_list', (ctx) => {
-  try {
-    mailingList(ctx)
   } catch (e) {
     console.log(e)
   }

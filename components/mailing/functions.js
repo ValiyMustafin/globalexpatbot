@@ -1,7 +1,7 @@
 const schedule = require('node-schedule');
 const { Telegraf, session, Markup } = require('telegraf')
-const { User, Mailing } = require('../db/models')
-const constvalue = require('./const')
+const { User, Mailing } = require('../../db/models')
+const constvalue = require('../const')
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.use(session())
@@ -114,8 +114,13 @@ async function sendTime(time, ctx, text, file_id, date, mrole, type) {
 
 async function Unsuccess(chat_id) {
     const user = await User.findOne({ where: { chatId: chat_id } })
-    user.role = 'block'
-    await user.save()
+    if (user.role === 'client') {
+        user.role = 'blockclient'
+        await user.save()
+    } else {
+        user.role = 'block'
+        await user.save()
+    }
 }
 
 function timeConverter(date) {
@@ -133,9 +138,9 @@ async function restartMailing(ctx) {
         const mailings = await Mailing.findAll({ where: { sent: '0' } })
         mailingsList = JSON.stringify(mailings, null, 2)
         const mailingsObj = await JSON.parse(mailingsList);
-          dateNow = new Date(Date.now())
-          timeConverter(mailings.date)
-          timer = (dates.newDate - dateNow) / 1000
+        dateNow = new Date(Date.now())
+        timeConverter(mailings.date)
+        timer = (dates.newDate - dateNow) / 1000
         const count = await Mailing.count({ where: { sent: '0' } })
         for (var i = 0; i < count; i++) {
             console.log(mailingsObj[i].date)

@@ -16,6 +16,7 @@ async function Start(ctx) {
     const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
     //ОБНОВЛЕНИЕ ЮЗЕРНЕЙМА
     updateUsername(ctx)
+    //Первое сообщение
     //Старт админов
     if (user.role == 'admin') {
         await ctx.replyWithHTML('<b>Вам доступна панель для аднимистратора</b>',

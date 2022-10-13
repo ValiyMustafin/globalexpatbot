@@ -2,7 +2,7 @@ const { Telegraf, session, Markup } = require('telegraf')
 const { User } = require('../db/models')
 require('dotenv').config()
 const constvalue = require('./const')
-const { sendNotification, adminMessages } = require('./admin')
+const { sendNotification, adminMessages } = require('./admin/messages')
 const keywords = require('../keywords/keywords')
 const { setQuestion, findKeyword } = require('../keywords/keywords')
 const { updateUsername } = require('./start')
@@ -10,7 +10,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 bot.use(session())
 
 async function Messages(ctx, type) {
-    ctx.session ??= { dialog: 0, messageid: 0, question: 0, scene: 0, mailingCreateStep: 0, addadmin: 0, newadmin: 0, warning: 0, adminname: 0 }
+    ctx.session ??= { dialog: 0, messageid: 0, question: 0, scene: 0, addadmin: 0, newadmin: 0, warning: 0, adminname: 0, mailingCreateStep: 0 }
     checkDB(ctx)
     try {
         //Антиспам
@@ -94,7 +94,9 @@ async function getUserInfo(ctx, type) {
             } else {
                 ctx.session.scene = 0
                 user.phone = ctx.message.text
-                user.role = 'user'
+                if (user.role != 'client') {
+                    user.role = 'user'
+                }
                 await user.save()
                 await ctx.reply('Ваш вопрос был передан в службу поддержки' + constvalue.worktimetext)
                 if (ctx.session.question_photo != 0 && ctx.session.question_photo != undefined) {
@@ -349,27 +351,27 @@ async function sendToSupportChat(ctx, type) {
     const user = await User.findOne({ where: { chatId: String(ctx.chat.id) } })
     if (type === 'text') {
         await ctx.telegram.sendMessage(process.env.CHANNEL_ID, '🔷Диалог с ' + user.name + ' | @' + ctx.message.from.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.message.from.id + '\n\n💬' + ctx.message.text + constvalue.finishtext)
-        
     } else {
         if (ctx.message.caption) {
             msg_caption = ctx.message.caption
         } else {
             msg_caption = '(сообщение отсутствует)'
         }
+        caption = '🔷Диалог с ' + user.name + ' | @' + ctx.chat.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.chat.id + '\n\n💬' + msg_caption + constvalue.finishtext
         if (type === 'photo') {
-            await ctx.telegram.sendPhoto(process.env.CHANNEL_ID, ctx.message.photo[1].file_id, { caption: '🔷Диалог с ' + user.name + ' | @' + ctx.chat.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.chat.id + '\n\n💬' + msg_caption + constvalue.finishtext })
+            await ctx.telegram.sendPhoto(process.env.CHANNEL_ID, ctx.message.photo[1].file_id, { caption: caption })
         }
         if (type === 'animation') {
-            await ctx.telegram.sendAnimation(process.env.CHANNEL_ID, ctx.message.animation.file_id, { caption: '🔷Диалог с ' + user.name + ' | @' + ctx.chat.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.chat.id + '\n\n💬' + msg_caption + constvalue.finishtext })
+            await ctx.telegram.sendAnimation(process.env.CHANNEL_ID, ctx.message.animation.file_id, { caption: caption })
         }
         if (type === 'video') {
-            await ctx.telegram.sendVideo(process.env.CHANNEL_ID, ctx.message.video.file_id, { caption: '🔷Диалог с ' + user.name + ' | @' + ctx.chat.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.chat.id + '\n\n💬' + msg_caption + constvalue.finishtext })
+            await ctx.telegram.sendVideo(process.env.CHANNEL_ID, ctx.message.video.file_id, { caption: caption })
         }
         if (type === 'document') {
-            await ctx.telegram.sendDocument(process.env.CHANNEL_ID, ctx.message.document.file_id, { caption: '🔷Диалог с ' + user.name + ' | @' + ctx.chat.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.chat.id + '\n\n💬' + msg_caption + constvalue.finishtext })
+            await ctx.telegram.sendDocument(process.env.CHANNEL_ID, ctx.message.document.file_id, { caption: caption })
         }
         if (type === 'voice') {
-            await ctx.telegram.sendVoice(process.env.CHANNEL_ID, ctx.message.voice.file_id, { caption: '🔷Диалог с ' + user.name + ' | @' + ctx.chat.username + ' | телефон: ' + user.phone + ' | id: ' + ctx.chat.id + '\n\n💬' + msg_caption + constvalue.finishtext })
+            await ctx.telegram.sendVoice(process.env.CHANNEL_ID, ctx.message.voice.file_id, { caption: caption })
         }
     }
 }
@@ -396,24 +398,25 @@ async function repeatedMsg(ctx, type, user, text, file) {
             } else {
                 msg_caption = '(текст отсутствует)'
             }
+            caption = '💬' + user.name + ' | ' + user.username + ' | id: ' + user.chatId + '\n\n' + msg_caption + constvalue.finishtext
             if (type == 'photo') {
-                await ctx.telegram.sendPhoto(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: '💬' + user.name + ' | ' + user.username + ' | id: ' + user.chatId + '\n\n' + msg_caption + constvalue.finishtext })
+                await ctx.telegram.sendPhoto(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: caption })
                 sendNotification(ctx, msg_caption + '\n🖼К сообщению приложен скрин', user)
             }
             if (type == 'animation') {
-                await ctx.telegram.sendAnimation(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: '💬' + user.name + ' | ' + user.username + ' | id: ' + user.chatId + '\n\n' + msg_caption + constvalue.finishtext })
+                await ctx.telegram.sendAnimation(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: caption })
                 sendNotification(ctx, msg_caption + '\n🖼К сообщению приложена гифка', user)
             }
             if (type == 'video') {
-                await ctx.telegram.sendVideo(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: '💬' + user.name + ' | ' + user.username + ' | id: ' + user.chatId + '\n\n' + msg_caption + constvalue.finishtext })
+                await ctx.telegram.sendVideo(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: caption })
                 sendNotification(ctx, msg_caption + '\n📹К сообщению приложено видео', user)
             }
             if (type == 'document') {
-                await ctx.telegram.sendDocument(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: '💬' + user.name + ' | ' + user.username + ' | id: ' + user.chatId + '\n\n' + msg_caption + constvalue.finishtext })
+                await ctx.telegram.sendDocument(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: caption })
                 sendNotification(ctx, msg_caption + '\n📄К сообщению приложен документ', user)
             }
             if (type == 'voice') {
-                await ctx.telegram.sendVoice(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: '💬' + user.name + ' | ' + user.username + ' | id: ' + user.chatId + '\n\n' + msg_caption + constvalue.finishtext })
+                await ctx.telegram.sendVoice(process.env.CHAT_ID, file, { reply_to_message_id: user.dialog_msgId, caption: caption })
                 sendNotification(ctx, msg_caption + '\n🎤К сообщению приложено аудио', user)
             }
         }
